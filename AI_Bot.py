@@ -1,38 +1,24 @@
-# Telegram AI Bot - Version 1
-# Features: AI Chat, Image Gen, Speech-to-Text, TTS, Google Search, YouTube Downloader, News, Coding, Currency Converter, etc.
-# Deployable on Railway.app
-
 import logging
+import os
+import tempfile
+import requests
 from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
-import g4f
-import requests
+from gtts import gTTS
 from pytube import YouTube
 from deep_translator import GoogleTranslator 
-import speech_recognition as sr
-import pyttsx3
 from forex_python.converter import CurrencyRates
-from PIL import Image
-import io
-import base64
 import replicate
 
 # Bot Configuration
-TOKEN = "7931988436:AAFb7tpH8gSoiDeVgNZ7CMHr0ncyg0lAV9M"  # Replace with your actual Telegram bot token
-NEWS_API_KEY = "0a4ecfaeab1943fa9d3546bee74d4fd9"  # Replace with your News API key
-import replicate
+TOKEN = "7931988436:AAFb7tpH8gSoiDeVgNZ7CMHr0ncyg0lAV9M"
+NEWS_API_KEY = "0a4ecfaeab1943fa9d3546bee74d4fd9"
+REPLICATE_API_KEY = "r8_OAjePwF4K85gbUr3nwjA0w03NY3RB0i2vr3aD"
 
-REPLICATE_API_KEY = "r8_OAjePwF4K85gbUr3nwjA0w03NY3RB0i2vr3aD"  # Replace this with your actual key
-
-replicate.client = replicate.Client(api_token=REPLICATE_API_KEY)  # Set the API key globally
-
-
+replicate.client = replicate.Client(api_token=REPLICATE_API_KEY)
 
 # Initialize bot
 bot = Bot(token=TOKEN)
-translator = GoogleTranslator(source="auto", target="en")
-recognizer = sr.Recognizer()
-tts_engine = pyttsx3.init()
 currency_rates = CurrencyRates()
 
 # Logging setup
@@ -41,15 +27,7 @@ logger = logging.getLogger(__name__)
 
 # AI Chatbot function
 def ai_chat(update: Update, context: CallbackContext) -> None:
-    user_message = update.message.text
-    try:
-        response = g4f.ChatCompletion.create(
-            model="gpt-4",  # You can use "gpt-3.5-turbo" as well
-            messages=[{"role": "user", "content": user_message}]
-        )
-        update.message.reply_text(response)
-    except Exception as e:
-        update.message.reply_text(f"⚠️ Error: {str(e)}. Please try again later.")
+    update.message.reply_text("AI Chat is under development.")
 
 # News Summarizer
 def news(update: Update, context: CallbackContext) -> None:
@@ -57,10 +35,7 @@ def news(update: Update, context: CallbackContext) -> None:
     response = requests.get(url).json()
     articles = response.get("articles", [])[:3]
     news_text = "\n".join([f"{i+1}. {a.get('title', 'No Title Available')}" for i, a in enumerate(articles)])
-    if not news_text.strip():
-        update.message.reply_text("⚠️ No news available right now. Try again later.")
-    else:
-        update.message.reply_text(news_text)
+    update.message.reply_text(news_text if news_text.strip() else "⚠️ No news available right now.")
 
 # YouTube Video Downloader
 def download_youtube(update: Update, context: CallbackContext) -> None:
@@ -70,12 +45,19 @@ def download_youtube(update: Update, context: CallbackContext) -> None:
     stream.download()
     update.message.reply_text("Downloaded successfully!")
 
-# Text-to-Speech
+# Text-to-Speech (gTTS)
 def text_to_speech(update: Update, context: CallbackContext) -> None:
     text = " ".join(context.args)
-    tts_engine.say(text)
-    tts_engine.runAndWait()
-    update.message.reply_text("Speech played!")
+    if not text:
+        update.message.reply_text("Usage: /tts <text>")
+        return
+    
+    tts = gTTS(text=text, lang="en")
+    temp_path = tempfile.gettempdir() + "/output.mp3"
+    tts.save(temp_path)
+    with open(temp_path, "rb") as audio_file:
+        update.message.reply_voice(voice=audio_file)
+    os.remove(temp_path)
 
 # Text Translator
 def translate_text(update: Update, context: CallbackContext) -> None:
@@ -107,16 +89,11 @@ def generate_image(update: Update, context: CallbackContext) -> None:
     if not prompt:
         update.message.reply_text("Usage: /image <description>")
         return
-
     try:
-        output = replicate.run(
-            "stability-ai/stable-diffusion",
-            input={"prompt": prompt}
-        )
+        output = replicate.run("stability-ai/stable-diffusion", input={"prompt": prompt})
         update.message.reply_photo(photo=output[0])
     except Exception as e:
         update.message.reply_text(f"⚠️ Error generating image: {str(e)}")
-
 
 # Command Handlers
 def main():
