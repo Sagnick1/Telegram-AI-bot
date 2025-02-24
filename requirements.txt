@@ -1,5 +1,10 @@
 python-telegram-bot
-openai
+g4f
 requests
-bs4
-pytz
+pytube
+deep-translator
+speechrecognition
+pyttsx3
+forex-python
+pillow
+replicate
