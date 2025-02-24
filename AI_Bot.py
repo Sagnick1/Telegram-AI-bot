@@ -11,9 +11,12 @@ from forex_python.converter import CurrencyRates
 import replicate
 
 # Bot Configuration
-TOKEN = "7931988436:AAFb7tpH8gSoiDeVgNZ7CMHr0ncyg0lAV9M"
-NEWS_API_KEY = "0a4ecfaeab1943fa9d3546bee74d4fd9"
-REPLICATE_API_KEY = "r8_OAjePwF4K85gbUr3nwjA0w03NY3RB0i2vr3aD"
+import os
+
+TOKEN = os.getenv("TOKEN")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+REPLICATE_API_KEY = os.getenv("REPLICATE_API_KEY")
+
 
 replicate.client = replicate.Client(api_token=REPLICATE_API_KEY)
 
