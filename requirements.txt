@@ -8,3 +8,5 @@ pyttsx3
 forex-python
 pillow
 replicate
+gtts
+
